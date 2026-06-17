@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BCI IoT Provisioning Hub</title>
+  <title>BCI Professional Provisioning Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Load MQTT library for simulation fallback -->
+  <!-- Load secure WebSockets MQTT library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
@@ -24,93 +24,99 @@
 </head>
 <body class="gradient-bg text-gray-100 min-h-screen flex items-center justify-center p-4">
 
-  <div class="max-w-md w-full bg-gray-900/85 backdrop-blur-xl border border-gray-800 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
-    <!-- Top accent glow -->
+  <div class="max-w-lg w-full bg-gray-900/90 backdrop-blur-xl border border-gray-800 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+    <!-- Top accent decorative line -->
     <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
 
-    <!-- Header -->
-    <div class="flex items-center space-x-3 mb-6">
+    <!-- Header info -->
+    <div class="flex items-center space-x-4 mb-6">
       <div class="p-3 bg-indigo-500/10 rounded-2xl border border-indigo-500/20">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
       </div>
       <div>
-        <h1 class="heading-font text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-purple-200">BCI Config Hub</h1>
-        <p class="text-xs text-gray-400 font-medium">Multi-Mode Provisioning Terminal</p>
+        <h1 class="heading-font text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-purple-200">BCI Intelligent Provisioner</h1>
+        <p class="text-xs text-gray-400 font-medium">Production Path: suzzy334.github.io/WIFI_ESP32_BLE</p>
       </div>
     </div>
 
-    <!-- Mode Selector Tabs -->
+    <!-- Mode Selector Tab -->
     <div class="grid grid-cols-2 gap-2 p-1 bg-gray-950 rounded-xl mb-6 border border-gray-800/50">
       <button id="tab-ble" onclick="switchMode('BLE')" class="py-2.5 text-xs font-semibold rounded-lg transition-all text-indigo-400 bg-gray-900 border border-gray-800">
         Physical BLE Mode
       </button>
       <button id="tab-sim" onclick="switchMode('SIM')" class="py-2.5 text-xs font-semibold rounded-lg transition-all text-gray-400 hover:text-gray-200">
-        Simulator Network Mode
+        Simulator Network Mode (MQTT)
       </button>
     </div>
 
-    <!-- Global Connection Status Banner -->
-    <div id="status-banner" class="mb-6 flex items-center justify-between p-3 bg-gray-950/60 rounded-xl border border-gray-800 text-xs">
-      <span class="text-gray-400">Current Interface Status:</span>
-      <span id="status-badge" class="px-2.5 py-0.5 bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded-full font-medium flex items-center gap-1.5">
-        <span class="h-1.5 w-1.5 rounded-full bg-yellow-400 animate-pulse"></span>
-        <span id="status-text">Staged (Awaiting Action)</span>
-      </span>
+    <!-- Connection Status Badge -->
+    <div class="mb-6 grid grid-cols-2 gap-3">
+      <div class="p-3 bg-gray-950/60 rounded-xl border border-gray-800 text-xs">
+        <span class="text-gray-500 block mb-1">Status Interface:</span>
+        <span id="status-badge" class="px-2.5 py-0.5 inline-flex bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded-full font-medium items-center gap-1.5">
+          <span class="h-1.5 w-1.5 rounded-full bg-yellow-400 animate-pulse"></span>
+          <span id="status-text">Disconnected</span>
+        </span>
+      </div>
+      <div class="p-3 bg-gray-950/60 rounded-xl border border-gray-800 text-xs">
+        <span class="text-gray-500 block mb-1">BLE Filter Mode:</span>
+        <button id="btn-toggle-filter" onclick="toggleBleFilter()" class="px-2.5 py-0.5 inline-flex bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full font-medium hover:bg-indigo-500/20 transition-all">
+          Filtered (Only ESP32)
+        </button>
+      </div>
     </div>
 
     <!-- Form Inputs -->
     <div class="space-y-4 mb-6">
       <div>
-        <label for="ssid" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Target WiFi SSID</label>
-        <input type="text" id="ssid" placeholder="Enter Router SSID" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all placeholder:text-gray-600">
+        <label for="ssid" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Target Wi-Fi SSID</label>
+        <input type="text" id="ssid" placeholder="Enter target network name" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all placeholder:text-gray-600">
       </div>
       <div>
-        <label for="password" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">WiFi Password</label>
+        <label for="password" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Wi-Fi Password</label>
         <input type="password" id="password" placeholder="••••••••" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all placeholder:text-gray-600">
       </div>
     </div>
 
-    <!-- Active Interface Buttons -->
+    <!-- Action Areas -->
     <div class="space-y-3">
       <!-- BLE Action Buttons -->
       <div id="ble-actions" class="space-y-3">
         <button id="btn-scan" onclick="connectBluetooth()" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-semibold py-3.5 px-4 rounded-xl transition-all text-sm flex items-center justify-center space-x-2 shadow-lg shadow-indigo-500/10">
-          <span>Scan & Pair ESP32-S3</span>
+          <span>Search & Connect to Device</span>
         </button>
         <button id="btn-write-ble" disabled onclick="writeCredentialsBLE()" class="w-full bg-gray-800 text-gray-500 py-3.5 px-4 rounded-xl text-sm font-semibold cursor-not-allowed transition-all">
-          Transmit Config via Bluetooth
+          Over-The-Air BLE Write (Forget Old Profiles)
         </button>
       </div>
 
       <!-- Simulator WebSockets Action Button -->
       <div id="sim-actions" class="hidden">
         <button onclick="publishSimulatorConfig()" class="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-3.5 px-4 rounded-xl transition-all text-sm flex items-center justify-center space-x-2 shadow-lg shadow-purple-500/10">
-          <span>Broadcast Config to Simulation</span>
+          <span>Publish Dynamic Configuration over HiveMQ</span>
         </button>
       </div>
     </div>
 
-    <!-- Console Terminal -->
+    <!-- Console Logging Window -->
     <div class="mt-6">
       <div class="flex items-center justify-between mb-2">
-        <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Interface Logs</span>
-        <button onclick="clearConsole()" class="text-xs text-indigo-400 hover:text-indigo-300">Clear Logs</button>
+        <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Device Interface Log Logs</span>
+        <button onclick="clearConsole()" class="text-xs text-indigo-400 hover:text-indigo-300">Flush</button>
       </div>
-      <div id="console" class="bg-gray-950 border border-gray-800 rounded-2xl p-4 h-32 overflow-y-auto text-xs font-mono text-indigo-300/70 space-y-1.5">
-        <div>[SYSTEM] Terminal loaded. Operating in SECURE HTTPS sandbox.</div>
+      <div id="console" class="bg-gray-950 border border-gray-800 rounded-2xl p-4 h-36 overflow-y-auto text-xs font-mono text-indigo-300/70 space-y-1.5">
+        <div>[SYSTEM] Pipeline online. Secure HTTPS context initialized.</div>
       </div>
     </div>
   </div>
 
   <script>
-    // UUIDs matching ESP32 firmware
     const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
     const CHAR_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
     
-    // MQTT configuration for Simulator websocket fallback
-    const MQTT_WS_URL = "wss://59d0387baa334dcea9fada320b769583.s1.eu.hivemq.cloud:8884/mqtt";
+    const MQTT_HOST = "59d0387baa334dcea9fada320b769583.s1.eu.hivemq.cloud";
     const MQTT_USER = "Srinath_esp32";
     const MQTT_PASS = "Srinath353";
     const TOPIC_PROVISION = "wheelchair/control";
@@ -119,6 +125,7 @@
     let bleDevice = null;
     let bleCharacteristic = null;
     let mqttClient = null;
+    let filterAllDevices = false; // Toggle for scanning all devices vs filtered
 
     function log(message, type = "info") {
       const consoleBox = document.getElementById('console');
@@ -138,14 +145,26 @@
       document.getElementById('console').innerHTML = "<div>[SYSTEM] Console logs flushed.</div>";
     }
 
+    function toggleBleFilter() {
+      filterAllDevices = !filterAllDevices;
+      const btn = document.getElementById('btn-toggle-filter');
+      if (filterAllDevices) {
+        btn.innerText = "Unfiltered (All Devices)";
+        btn.className = "px-2.5 py-0.5 inline-flex bg-pink-500/10 text-pink-400 border border-pink-500/20 rounded-full font-medium hover:bg-pink-500/20 transition-all";
+        log("BLE scanning set to UNFILTERED mode. Note: Will scan for all mobile, TV, and nearby radios.", "warning");
+      } else {
+        btn.innerText = "Filtered (Only ESP32)";
+        btn.className = "px-2.5 py-0.5 inline-flex bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full font-medium hover:bg-indigo-500/20 transition-all";
+        log("BLE scanning set to FILTERED mode. Will only display ESP32-S3 boards.");
+      }
+    }
+
     function switchMode(mode) {
       currentMode = mode;
       const tabBle = document.getElementById('tab-ble');
       const tabSim = document.getElementById('tab-sim');
       const bleActions = document.getElementById('ble-actions');
       const simActions = document.getElementById('sim-actions');
-      const badge = document.getElementById('status-badge');
-      const statusText = document.getElementById('status-text');
 
       if (mode === "BLE") {
         tabBle.className = "py-2.5 text-xs font-semibold rounded-lg transition-all text-indigo-400 bg-gray-900 border border-gray-800";
@@ -156,7 +175,7 @@
         if (bleDevice && bleDevice.gatt.connected) {
           updateStatusBadge("success", "BLE Connected");
         } else {
-          updateStatusBadge("warning", "BLE Arm State Available");
+          updateStatusBadge("warning", "BLE Mode Standby");
         }
         log("Switched interface to Physical BLE Configuration.");
       } else {
@@ -165,7 +184,7 @@
         simActions.classList.remove('hidden');
         bleActions.classList.add('hidden');
         
-        updateStatusBadge("warning", "Simulator Socket Ready");
+        updateStatusBadge("warning", "Simulator Link Standby");
         log("Switched interface to Virtual Simulator Bridge.");
         initMqttConnection();
       }
@@ -177,53 +196,67 @@
       statusText.innerText = text;
 
       if (type === "success") {
-        badge.className = "px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full font-medium flex items-center gap-1.5";
+        badge.className = "px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full font-medium flex items-center gap-1.5";
         badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span>${text}</span>`;
       } else if (type === "error") {
-        badge.className = "px-2.5 py-0.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-full font-medium flex items-center gap-1.5";
+        badge.className = "px-2.5 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded-full font-medium flex items-center gap-1.5";
         badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-red-400"></span><span>${text}</span>`;
       } else {
-        badge.className = "px-2.5 py-0.5 bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded-full font-medium flex items-center gap-1.5";
+        badge.className = "px-2.5 py-1 bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded-full font-medium flex items-center gap-1.5";
         badge.innerHTML = `<span class="h-1.5 w-1.5 rounded-full bg-yellow-400 animate-pulse"></span><span>${text}</span>`;
       }
     }
 
     // ==========================================
-    // PHYSICAL BLUETOOTH METHOD (WEB BLE)
+    // METHOD A: WEB BLE (REAL HARDWARE LINK)
     // ==========================================
     async function connectBluetooth() {
       try {
-        log("Scanning for ESP32_BCI_PROV broadcast signature...");
-        bleDevice = await navigator.bluetooth.requestDevice({
-          filters: [{ name: 'ESP32_BCI_PROV' }],
-          optionalServices: [SERVICE_UUID]
-        });
+        let scanOptions = {};
+        
+        if (filterAllDevices) {
+          // Unfiltered Scan: Display all nearby bluetooth modules
+          scanOptions = {
+            acceptAllDevices: true,
+            optionalServices: [SERVICE_UUID]
+          };
+          log("Broad-spectrum scanning initialized. Showing all detectable BLE beacons.");
+        } else {
+          // Target-Filtered Scan: Restrict search strictly to our ESP32-S3 broadcast signature
+          scanOptions = {
+            filters: [{ name: 'ESP32_BCI_PROV' }],
+            optionalServices: [SERVICE_UUID]
+          };
+          log("Target-locked scan initialized. Restricting viewport to 'ESP32_BCI_PROV'.");
+        }
 
-        log(`Paired with: ${bleDevice.name}. Connecting over BLE...`);
+        bleDevice = await navigator.bluetooth.requestDevice(scanOptions);
+
+        log(`Target paired successfully: ${bleDevice.name}. Linking layers...`);
         const server = await bleDevice.gatt.connect();
         
-        log("Connected. Loading primary service database...");
+        log("GATT channel bound. Retrieving interface...");
         const service = await server.getPrimaryService(SERVICE_UUID);
         
-        log("Discovering writable security characteristic...");
+        log("Characteristic resolved.");
         bleCharacteristic = await service.getCharacteristic(CHAR_UUID);
 
-        log("BLE Setup Secure! Ready to provision.", "success");
-        updateStatusBadge("success", "BLE Armed");
+        log("Hardware handshake successful!", "success");
+        updateStatusBadge("success", "BLE Connected");
         
         const btnWrite = document.getElementById('btn-write-ble');
         btnWrite.disabled = false;
         btnWrite.className = "w-full bg-gradient-to-r from-emerald-500 to-indigo-500 hover:from-emerald-600 hover:to-indigo-600 text-white py-3.5 px-4 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-emerald-500/10 cursor-pointer";
 
         bleDevice.addEventListener('gattserverdisconnected', () => {
-          log("Bluetooth link lost.", "error");
-          updateStatusBadge("error", "Link Terminated");
+          log("Hardware link terminated by target system.", "error");
+          updateStatusBadge("error", "Link Offline");
           btnWrite.disabled = true;
           btnWrite.className = "w-full bg-gray-800 text-gray-500 py-3.5 px-4 rounded-xl text-sm font-semibold cursor-not-allowed";
         });
 
       } catch (err) {
-        log(`BLE Error: ${err.message}`, "error");
+        log(`Handshake Rejected: ${err.message}`, "error");
       }
     }
 
@@ -232,45 +265,67 @@
       const pass = document.getElementById('password').value.trim();
 
       if (!ssid) {
-        log("Validation Error: SSID cannot be empty.", "error");
+        log("Validation Error: WiFi SSID is mandatory.", "error");
         return;
       }
 
       try {
-        log(`Encrypting profile: SSID="${ssid}"`);
+        log(`Formatting NVS parameter block...`);
         const payload = JSON.stringify({ ssid: ssid, pass: pass });
         const encoder = new TextEncoder();
         const rawBytes = encoder.encode(payload);
 
-        log("Writing data block to physical hardware...");
+        log("Writing parameters directly to ESP32 Flash memory sector...");
         await bleCharacteristic.writeValueWithResponse(rawBytes);
-        log("Data packet accepted! Physical ESP32 is rebooting.", "success");
+        log("Parameters committed. Target device is executing reboot sequence.", "success");
       } catch (err) {
-        log(`BLE Write Failed: ${err.message}`, "error");
+        log(`NVS Write Rejected: ${err.message}`, "error");
       }
     }
 
-    // ==========================================
-    // SIMULATOR WEBSOCKET METHOD (MQTT PORT)
-    // ==========================================
+    // ======================================================
+    // METHOD B: WEBSOCKETS (REBOOT PROOF MQTT BRIDGE)
+    // ======================================================
     function initMqttConnection() {
       if (mqttClient && mqttClient.connected) return;
 
       log("Opening pipeline to HiveMQ Secure WebSocket Cluster...");
-      mqttClient = mqtt.connect(MQTT_WS_URL, {
+      
+      const connectUrl = `wss://${MQTT_HOST}:8884/mqtt`;
+      
+      const options = {
         username: MQTT_USER,
         password: MQTT_PASS,
-        clientId: "Provisioner_Web_" + Math.random().toString(16).substring(2, 8)
-      });
+        clientId: "Web_Prov_Tool_" + Math.random().toString(16).substring(2, 8),
+        connectTimeout: 10000,
+        reconnectPeriod: 2500,
+        clean: true
+      };
+
+      mqttClient = mqtt.connect(connectUrl, options);
 
       mqttClient.on('connect', () => {
-        log("Websocket pipeline to MQTT Cloud is Online.", "success");
-        updateStatusBadge("success", "Simulator Ready");
+        log("Websocket pipeline to HiveMQ Broker is active.", "success");
+        updateStatusBadge("success", "Simulator Connected");
+      });
+
+      mqttClient.on('reconnect', () => {
+        log("Connection interrupted. Re-negotiating handshake...", "warning");
+      });
+
+      mqttClient.on('close', () => {
+        log("Handshake channel closed.", "warning");
+        updateStatusBadge("error", "Tunnel Closed");
+      });
+
+      mqttClient.on('offline', () => {
+        log("Broker went offline.", "error");
+        updateStatusBadge("error", "Socket Offline");
       });
 
       mqttClient.on('error', (err) => {
-        log(`Websocket Error: ${err.message}`, "error");
-        updateStatusBadge("error", "Socket Down");
+        log(`Websocket error: ${err.message}`, "error");
+        updateStatusBadge("error", "Network Issue");
       });
     }
 
@@ -279,12 +334,13 @@
       const pass = document.getElementById('password').value.trim();
 
       if (!ssid) {
-        log("Validation Error: SSID cannot be empty.", "error");
+        log("Validation error: SSID parameter missing.", "error");
         return;
       }
 
       if (!mqttClient || !mqttClient.connected) {
-        log("Error: WebSocket pipeline is disconnected.", "error");
+        log("Hardware link offline. Rebuilding socket pipeline...", "warning");
+        initMqttConnection();
         return;
       }
 
@@ -295,9 +351,14 @@
         pass: pass
       };
 
-      mqttClient.publish(TOPIC_CONTROL, JSON.stringify(configPayload), { qos: 1 });
-      log(`Sent Configuration Payload to topic [${TOPIC_CONTROL}] successfully!`, "success");
-      log(`Simulation payload: ${JSON.stringify(configPayload)}`, "warning");
+      mqttClient.publish(TOPIC_PROVISION, JSON.stringify(configPayload), { qos: 1 }, (err) => {
+        if (err) {
+          log(`Config publish failed: ${err.message}`, "error");
+        } else {
+          log(`[SUCCESS] Parameters committed over HiveMQ. Inspect simulated console.`, "success");
+          log(`MQTT Channel: ${TOPIC_PROVISION} -> Payload: ${JSON.stringify(configPayload)}`, "warning");
+        }
+      });
     }
   </script>
 </body>
